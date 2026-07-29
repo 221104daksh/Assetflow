@@ -30,7 +30,7 @@ def create_app(config_class=Config):
     # -------- Extensions --------
     db.init_app(app)
     migrate.init_app(app, db)
-    login_manager.init_app(app, db)
+    login_manager.init_app(app)
     bcrypt.init_app(app)
     csrf.init_app(app)
     cache.init_app(app)
