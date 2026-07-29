@@ -1,7 +1,14 @@
 import os
 from flask import Flask, render_template
 from config import Config, basedir
-from assetflow.extensions import db, migrate, login_manager, bcrypt, csrf, cache
+from assetflow.extensions import (
+    db,
+    migrate,
+    login_manager,
+    bcrypt,
+    csrf,
+    cache,
+)
 
 
 def create_app(config_class=Config):
@@ -41,7 +48,7 @@ def create_app(config_class=Config):
     cache.init_app(app)
 
     # --------------------------------------------------
-    # Import ALL models BEFORE create_all()
+    # Import Models
     # --------------------------------------------------
     from assetflow.models import (
         User,
@@ -55,10 +62,14 @@ def create_app(config_class=Config):
     # Create Database Tables
     # --------------------------------------------------
     with app.app_context():
+
+        print("=" * 60)
         print("Creating database tables...")
+        print("=" * 60)
 
         db.create_all()
 
+        # ---------------- Default Settings ----------------
         defaults = {
             "org_name": "AssetFlow",
             "org_logo": "",
@@ -67,23 +78,59 @@ def create_app(config_class=Config):
         }
 
         for key, value in defaults.items():
-            if Setting.query.filter_by(key=key).first() is None:
-                db.session.add(Setting(key=key, value=value))
+            setting = Setting.query.filter_by(key=key).first()
 
-        # Create default admin if database is empty
-        if User.query.count() == 0:
+            if setting is None:
+                db.session.add(
+                    Setting(
+                        key=key,
+                        value=value,
+                    )
+                )
+
+        # ---------------- Create / Reset Admin ----------------
+        admin = User.query.filter_by(username="admin").first()
+
+        if admin is None:
+
+            print("Creating admin user...")
+
             admin = User(
                 name="Administrator",
                 username="admin",
                 email="admin@example.com",
                 role="admin",
             )
+
             admin.set_password("admin123")
             db.session.add(admin)
 
+        else:
+
+            print("Admin already exists.")
+            print("Resetting admin password...")
+
+            admin.name = "Administrator"
+            admin.email = "admin@example.com"
+            admin.role = "admin"
+
+            admin.set_password("admin123")
+
         db.session.commit()
 
+        print("=" * 60)
         print("Database initialized successfully.")
+        print(f"Total Users: {User.query.count()}")
+
+        for user in User.query.all():
+            print(
+                f"ID={user.id}, "
+                f"Username={user.username}, "
+                f"Email={user.email}, "
+                f"Role={user.role}"
+            )
+
+        print("=" * 60)
 
     # --------------------------------------------------
     # Login Manager
@@ -92,8 +139,11 @@ def create_app(config_class=Config):
     def load_user(user_id):
         return db.session.get(User, int(user_id))
 
+    login_manager.login_view = "auth.login"
+    login_manager.login_message_category = "warning"
+
     # --------------------------------------------------
-    # Blueprints
+    # Register Blueprints
     # --------------------------------------------------
     from assetflow.auth import bp as auth_bp
     from assetflow.dashboard import bp as dashboard_bp
@@ -113,7 +163,7 @@ def create_app(config_class=Config):
     app.register_blueprint(public_bp)
 
     # --------------------------------------------------
-    # Routes
+    # Root Route
     # --------------------------------------------------
     @app.route("/")
     def root():
@@ -122,6 +172,7 @@ def create_app(config_class=Config):
 
         if current_user.is_authenticated:
             return redirect(url_for("dashboard.index"))
+
         return redirect(url_for("auth.login"))
 
     # --------------------------------------------------
@@ -167,7 +218,18 @@ def create_app(config_class=Config):
     return app
 
 
+# --------------------------------------------------
+# Create Application
+# --------------------------------------------------
 app = create_app()
 
+
+# --------------------------------------------------
+# Run Development Server
+# --------------------------------------------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=True,
+    )
