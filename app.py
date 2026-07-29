@@ -3,6 +3,7 @@ from flask import Flask, render_template
 from config import Config, basedir
 from assetflow.extensions import db, migrate, login_manager, bcrypt, csrf, cache
 
+
 def create_app(config_class=Config):
     app = Flask(
         __name__,
@@ -12,14 +13,16 @@ def create_app(config_class=Config):
 
     app.config.from_object(config_class)
 
-    # Create the SAME instance folder used by config.py
+    # --------------------------------------------------
+    # Create required folders
+    # --------------------------------------------------
     instance_dir = os.path.join(basedir, "instance")
     os.makedirs(instance_dir, exist_ok=True)
-
-    # Upload folder
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
-    # Debug (remove later)
+    # --------------------------------------------------
+    # Debug Info
+    # --------------------------------------------------
     print("=" * 60)
     print("Working Directory :", os.getcwd())
     print("Root Path         :", app.root_path)
@@ -27,7 +30,9 @@ def create_app(config_class=Config):
     print("Database URI      :", app.config["SQLALCHEMY_DATABASE_URI"])
     print("=" * 60)
 
-    # -------- Extensions --------
+    # --------------------------------------------------
+    # Initialize Extensions
+    # --------------------------------------------------
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
@@ -35,13 +40,61 @@ def create_app(config_class=Config):
     csrf.init_app(app)
     cache.init_app(app)
 
-    from assetflow.models import User
+    # --------------------------------------------------
+    # Import ALL models BEFORE create_all()
+    # --------------------------------------------------
+    from assetflow.models import (
+        User,
+        Employee,
+        Asset,
+        AuditLog,
+        Setting,
+    )
 
+    # --------------------------------------------------
+    # Create Database Tables
+    # --------------------------------------------------
+    with app.app_context():
+        print("Creating database tables...")
+
+        db.create_all()
+
+        defaults = {
+            "org_name": "AssetFlow",
+            "org_logo": "",
+            "theme_color": "#4361ee",
+            "footer_text": "AssetFlow — IT Asset Management",
+        }
+
+        for key, value in defaults.items():
+            if Setting.query.filter_by(key=key).first() is None:
+                db.session.add(Setting(key=key, value=value))
+
+        # Create default admin if database is empty
+        if User.query.count() == 0:
+            admin = User(
+                name="Administrator",
+                username="admin",
+                email="admin@example.com",
+                role="admin",
+            )
+            admin.set_password("admin123")
+            db.session.add(admin)
+
+        db.session.commit()
+
+        print("Database initialized successfully.")
+
+    # --------------------------------------------------
+    # Login Manager
+    # --------------------------------------------------
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        return db.session.get(User, int(user_id))
 
-    # -------- Blueprints --------
+    # --------------------------------------------------
+    # Blueprints
+    # --------------------------------------------------
     from assetflow.auth import bp as auth_bp
     from assetflow.dashboard import bp as dashboard_bp
     from assetflow.employees import bp as employees_bp
@@ -59,6 +112,9 @@ def create_app(config_class=Config):
     app.register_blueprint(settings_bp, url_prefix="/settings")
     app.register_blueprint(public_bp)
 
+    # --------------------------------------------------
+    # Routes
+    # --------------------------------------------------
     @app.route("/")
     def root():
         from flask import redirect, url_for
@@ -68,6 +124,9 @@ def create_app(config_class=Config):
             return redirect(url_for("dashboard.index"))
         return redirect(url_for("auth.login"))
 
+    # --------------------------------------------------
+    # Error Handlers
+    # --------------------------------------------------
     @app.errorhandler(403)
     def forbidden(e):
         return render_template("errors/403.html"), 403
@@ -78,21 +137,32 @@ def create_app(config_class=Config):
 
     @app.errorhandler(500)
     def server_error(e):
+        db.session.rollback()
         return render_template("errors/500.html"), 500
 
+    # --------------------------------------------------
+    # Global Template Variables
+    # --------------------------------------------------
     @app.context_processor
     def inject_globals():
-        from assetflow.models import Setting
-
-        return {
-            "org_name": Setting.get("org_name", "AssetFlow"),
-            "org_logo": Setting.get("org_logo", ""),
-            "theme_color": Setting.get("theme_color", "#4361ee"),
-            "footer_text": Setting.get(
-                "footer_text",
-                "AssetFlow — IT Asset Management",
-            ),
-        }
+        try:
+            return {
+                "org_name": Setting.get("org_name", "AssetFlow"),
+                "org_logo": Setting.get("org_logo", ""),
+                "theme_color": Setting.get("theme_color", "#4361ee"),
+                "footer_text": Setting.get(
+                    "footer_text",
+                    "AssetFlow — IT Asset Management",
+                ),
+            }
+        except Exception:
+            db.session.rollback()
+            return {
+                "org_name": "AssetFlow",
+                "org_logo": "",
+                "theme_color": "#4361ee",
+                "footer_text": "AssetFlow — IT Asset Management",
+            }
 
     return app
 
@@ -100,4 +170,4 @@ def create_app(config_class=Config):
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=True)
