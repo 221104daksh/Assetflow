@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+
+<div class="af-page-header">
+  <div>
+    <h1 class="af-page-title">Settings</h1>
+    <p class="af-page-subtitle">Configure your organization and QR label defaults.</p>
+  </div>
+</div>
+
+<div class="af-card" style="max-width: 640px;">
+  <div class="af-card-body">
+    <form method="POST" enctype="multipart/form-data" novalidate>
+      {{ form.hidden_tag() }}
+
+      {% if logo %}
+      <div class="mb-3">
+        <img src="{{ url_for('static', filename='images/uploads/' + logo) }}" alt="logo" style="height:48px;border-radius:10px;">
+      </div>
+      {% endif %}
+
+      <div class="row g-3">
+        <div class="col-md-8">
+          <label class="af-form-label">Organization Name</label>
+          {{ form.org_name(class="af-form-control") }}
+        </div>
+        <div class="col-md-4">
+          <label class="af-form-label">Theme Color</label>
+          {{ form.theme_color(class="af-form-control", type="color") }}
+        </div>
+        <div class="col-md-12">
+          <label class="af-form-label">Organization Logo</label>
+          {{ form.org_logo(class="af-form-control") }}
+        </div>
+        <div class="col-md-12">
+          <label class="af-form-label">Public URL</label>
+          {{ form.public_url(class="af-form-control", placeholder="https://assets.company.com") }}
+          <div class="af-form-hint">Used to build permanent QR code links (/pc/&lt;asset_id&gt;).</div>
+        </div>
+        <div class="col-md-6">
+          <label class="af-form-label">QR Label Title</label>
+          {{ form.qr_label_title(class="af-form-control") }}
+        </div>
+        <div class="col-md-6">
+          <label class="af-form-label">Default Theme</label>
+          {{ form.default_theme(class="af-form-control form-select") }}
+        </div>
+        <div class="col-md-12">
+          <label class="af-form-label">Footer Text</label>
+          {{ form.footer_text(class="af-form-control") }}
+        </div>
+      </div>
+
+      <div class="af-divider"></div>
+      {{ form.submit(class="btn btn-af-primary") }}
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}QR Codes{% endblock %}
+{% block content %}
+
+<div class="af-page-header">
+  <div>
+    <h1 class="af-page-title">QR Codes</h1>
+    <p class="af-page-subtitle">Every computer has a permanent QR label pointing to its live public page.</p>
+  </div>
+</div>
+
+{% if assets %}
+<div class="row g-3">
+  {% for a in assets %}
+  <div class="col-md-4 col-lg-3">
+    <div class="af-card text-center">
+      <div class="af-card-body">
+        <div class="af-qr-box mb-3">
+          <img src="{{ qr_codes[a.asset_id] }}" alt="QR {{ a.asset_id }}" width="140" height="140">
+        </div>
+        <div class="fw-bold">{{ a.asset_id }}</div>
+        <div class="text-muted small mb-3">{{ a.asset_tag }}</div>
+        <div class="d-flex gap-2 justify-content-center">
+          <a href="{{ url_for('qr.view', asset_id=a.asset_id) }}" class="btn btn-af-outline btn-af-sm">View</a>
+          <a href="{{ url_for('qr.label', asset_id=a.asset_id) }}" class="btn btn-af-outline btn-af-sm">Print Label</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="af-empty"><i class="bi bi-qr-code"></i><h5 class="fw-bold">No computers yet</h5></div>
+{% endif %}
+{% endblock %}

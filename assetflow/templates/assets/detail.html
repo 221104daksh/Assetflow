@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}{{ asset.asset_id }}{% endblock %}
+{% block content %}
+
+<div class="af-page-header">
+  <div>
+    <a href="{{ url_for('assets.list_assets') }}" class="text-muted small"><i class="bi bi-arrow-left"></i> Back to Assets</a>
+    <h1 class="af-page-title mt-1">{{ asset.asset_id }}</h1>
+    <p class="af-page-subtitle">{{ asset.model_number }} · {{ asset.manufacturer }} · Tag {{ asset.asset_tag }}</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('qr.view', asset_id=asset.asset_id) }}" class="btn btn-af-outline"><i class="bi bi-qr-code me-1"></i> QR</a>
+    {% if current_user.is_admin %}
+    <a href="{{ url_for('assets.edit', asset_id=asset.asset_id) }}" class="btn btn-af-outline"><i class="bi bi-pencil me-1"></i> Edit</a>
+    <form method="POST" action="{{ url_for('assets.delete', asset_id=asset.asset_id) }}" data-af-confirm="Delete {{ asset.asset_id }}? This cannot be undone.">
+      <button class="btn btn-af-danger"><i class="bi bi-trash me-1"></i> Delete</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="af-card mb-3">
+      <div class="af-card-header"><h3>Hardware Information</h3></div>
+      <div class="af-card-body">
+        <dl class="row mb-0 small">
+          <dt class="col-4 text-muted">Hostname</dt><dd class="col-8 af-mono">{{ asset.hostname or '—' }}</dd>
+          <dt class="col-4 text-muted">Serial Number</dt><dd class="col-8 af-mono">{{ asset.serial_number }}</dd>
+          <dt class="col-4 text-muted">CPU</dt><dd class="col-8">{{ asset.cpu or '—' }} {% if asset.cpu_cores %}({{ asset.cpu_cores }} cores){% endif %}</dd>
+          <dt class="col-4 text-muted">RAM</dt><dd class="col-8">{{ asset.ram or '—' }}</dd>
+          <dt class="col-4 text-muted">Disk</dt><dd class="col-8">{{ asset.disk_size or '—' }} {{ asset.disk_type or '' }}</dd>
+          <dt class="col-4 text-muted">Operating System</dt><dd class="col-8">{{ asset.operating_system }} {{ asset.os_version or '' }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="af-card mb-3">
+      <div class="af-card-header"><h3>Network Information</h3></div>
+      <div class="af-card-body">
+        <dl class="row mb-0 small">
+          <dt class="col-4 text-muted">MAC Address</dt><dd class="col-8 af-mono">{{ asset.mac_address or '—' }}</dd>
+          <dt class="col-4 text-muted">IP Address</dt><dd class="col-8 af-mono">{{ asset.ip_address or '—' }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="af-card">
+      <div class="af-card-header"><h3>Change History</h3></div>
+      <div class="af-table-wrap">
+        {% if logs %}
+        <table class="af-table">
+          <thead><tr><th>Action</th><th>Field</th><th>Old</th><th>New</th><th>By</th><th>When</th></tr></thead>
+          <tbody>
+            {% for log in logs %}
+            <tr>
+              <td><span class="af-badge af-badge-primary">{{ log.action }}</span></td>
+              <td class="text-muted small">{{ log.field_changed or '—' }}</td>
+              <td class="text-muted small">{{ log.old_value or '—' }}</td>
+              <td class="text-muted small">{{ log.new_value or '—' }}</td>
+              <td class="text-muted small">{{ log.user.username if log.user else 'system' }}</td>
+              <td class="text-muted small">{{ log.timestamp.strftime('%b %d, %Y %H:%M') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="af-empty py-4"><i class="bi bi-clock-history"></i><p class="mb-0">No history yet.</p></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="af-card mb-3">
+      <div class="af-card-header"><h3>Assignment</h3></div>
+      <div class="af-card-body">
+        {% if asset.employee %}
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="af-avatar">{{ asset.employee.name[:1]|upper }}</div>
+            <div>
+              <a href="{{ url_for('employees.detail', employee_id=asset.employee.employee_id) }}" class="fw-semibold">{{ asset.employee.name }}</a>
+              <div class="text-muted small">{{ asset.employee.employee_id }} · {{ asset.employee.department }}</div>
+            </div>
+          </div>
+          <span class="af-badge af-badge-success mb-3"><i class="bi bi-check-circle-fill"></i> Assigned</span>
+          {% if current_user.is_admin %}
+          <form method="POST" action="{{ url_for('assets.unassign', asset_id=asset.asset_id) }}" data-af-confirm="Unassign {{ asset.asset_id }} from {{ asset.employee.name }}?">
+            <button class="btn btn-af-outline w-100 mb-2">Unassign</button>
+          </form>
+          {% endif %}
+        {% else %}
+          <span class="af-badge af-badge-muted mb-3"><i class="bi bi-dash-circle"></i> Available</span>
+        {% endif %}
+
+        {% if current_user.is_admin %}
+        <div class="af-divider"></div>
+        <form method="POST" action="{{ url_for('assets.assign', asset_id=asset.asset_id) }}">
+          {{ assign_form.hidden_tag() }}
+          <label class="af-form-label">{{ 'Reassign to' if asset.employee else 'Assign to' }}</label>
+          {{ assign_form.employee_id(class="af-form-control mb-2") }}
+          <button class="btn btn-af-primary w-100" type="submit">
+            {{ 'Reassign' if asset.employee else 'Assign' }}
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="af-card">
+      <div class="af-card-body text-center">
+        <div class="text-muted small mb-2">Last Updated</div>
+        <div class="fw-semibold">{{ asset.updated_at.strftime('%b %d, %Y %H:%M') }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

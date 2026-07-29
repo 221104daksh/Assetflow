@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+
+<div class="af-page-header">
+  <div>
+    <h1 class="af-page-title">Welcome back, {{ current_user.name.split(' ')[0] }} 👋</h1>
+    <p class="af-page-subtitle">Here's what's happening across your IT assets today.</p>
+  </div>
+  <div class="d-flex gap-2">
+    {% if current_user.is_admin %}
+    <a href="{{ url_for('assets.create') }}" class="btn btn-af-primary"><i class="bi bi-plus-lg me-1"></i> New Computer</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  {% set cards = [
+    ("Total Assets", stats.total_assets, "bi-pc-display-horizontal", "af-primary"),
+    ("Assigned Assets", stats.assigned_assets, "bi-person-check-fill", "af-success"),
+    ("Available Assets", stats.available_assets, "bi-box-seam", "af-warning"),
+    ("Total Employees", stats.total_employees, "bi-people-fill", "af-info")
+  ] %}
+  {% for label, value, icon, color in cards %}
+  <div class="col-6 col-lg-3">
+    <div class="af-stat-card">
+      <div class="af-stat-icon" style="background: var(--{{color}}-soft, var(--af-primary-soft)); color: var(--{{color}});">
+        <i class="bi {{ icon }}"></i>
+      </div>
+      <div class="af-stat-value">{{ value }}</div>
+      <div class="af-stat-label">{{ label }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="row g-3 mb-3">
+  {% set cards2 = [
+    ("Departments", stats.departments, "bi-diagram-3-fill"),
+    ("Manufacturers", stats.manufacturers, "bi-building"),
+    ("Windows PCs", stats.windows_pcs, "bi-windows"),
+    ("Linux PCs", stats.linux_pcs, "bi-terminal"),
+    ("macOS PCs", stats.mac_pcs, "bi-apple"),
+    ("Added This Month", stats.added_this_month, "bi-calendar-plus")
+  ] %}
+  {% for label, value, icon in cards2 %}
+  <div class="col-6 col-lg-2">
+    <div class="af-stat-card" style="padding:14px 16px;">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi {{ icon }} text-muted"></i>
+        <div class="af-stat-value" style="font-size:19px;">{{ value }}</div>
+      </div>
+      <div class="af-stat-label">{{ label }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-4">
+    <div class="af-card h-100">
+      <div class="af-card-header"><h3>Assigned vs Available</h3></div>
+      <div class="af-card-body"><canvas id="chartAssigned" height="220"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="af-card h-100">
+      <div class="af-card-header"><h3>Assets by Department</h3></div>
+      <div class="af-card-body"><canvas id="chartDept" height="220"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="af-card h-100">
+      <div class="af-card-header"><h3>Assets by Operating System</h3></div>
+      <div class="af-card-body"><canvas id="chartOs" height="220"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-6">
+    <div class="af-card h-100">
+      <div class="af-card-header"><h3>Assets by Manufacturer</h3></div>
+      <div class="af-card-body"><canvas id="chartMfr" height="200"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="af-card h-100">
+      <div class="af-card-header"><h3>Recent Activity</h3></div>
+      <div class="af-card-body p-0">
+        {% if recent_activity %}
+        <div class="af-table-wrap">
+          <table class="af-table">
+            <tbody>
+              {% for log in recent_activity %}
+              <tr>
+                <td><span class="af-badge af-badge-primary">{{ log.action }}</span></td>
+                <td class="text-muted small">{{ log.asset.asset_id if log.asset else '—' }}</td>
+                <td class="text-muted small">{{ log.timestamp.strftime('%b %d, %H:%M') }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="af-empty py-4"><i class="bi bi-clock-history"></i><p class="mb-0">No activity yet.</p></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="af-card">
+      <div class="af-card-header">
+        <h3>Recently Updated Assets</h3>
+        <a href="{{ url_for('assets.list_assets') }}" class="small">View all</a>
+      </div>
+      <div class="af-table-wrap">
+        {% if recent_assets %}
+        <table class="af-table">
+          <thead><tr><th>Asset</th><th>Hostname</th><th>Assigned To</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for a in recent_assets %}
+            <tr onclick="window.location='{{ url_for('assets.detail', asset_id=a.asset_id) }}'" style="cursor:pointer">
+              <td><b>{{ a.asset_id }}</b><div class="text-muted small">{{ a.model_number }}</div></td>
+              <td class="af-mono">{{ a.hostname or '—' }}</td>
+              <td>{{ a.employee.name if a.employee else '—' }}</td>
+              <td>
+                {% if a.status == 'Assigned' %}
+                <span class="af-badge af-badge-success"><i class="bi bi-check-circle-fill"></i> Assigned</span>
+                {% else %}
+                <span class="af-badge af-badge-muted"><i class="bi bi-dash-circle"></i> Available</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="af-empty"><i class="bi bi-pc-display-horizontal"></i><p class="mb-0">No assets yet.</p></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="af-card">
+      <div class="af-card-header"><h3>Recent Assignments</h3></div>
+      <div class="af-table-wrap">
+        {% if recent_assignments %}
+        <table class="af-table">
+          <tbody>
+            {% for log in recent_assignments %}
+            <tr>
+              <td>
+                <div class="fw-semibold small">{{ log.action }}</div>
+                <div class="text-muted small">{{ log.asset.asset_id if log.asset else '—' }} → {{ log.new_value or '—' }}</div>
+              </td>
+              <td class="text-muted small text-end">{{ log.timestamp.strftime('%b %d') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="af-empty py-4"><i class="bi bi-arrow-left-right"></i><p class="mb-0">No assignments yet.</p></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+  const textColor = isDark ? '#9aa1b1' : '#6b7280';
+  Chart.defaults.color = textColor;
+  Chart.defaults.font.family = 'Inter';
+
+  new Chart(document.getElementById('chartAssigned'), {
+    type: 'doughnut',
+    data: {
+      labels: {{ assigned_vs_available.labels | tojson }},
+      datasets: [{ data: {{ assigned_vs_available.data | tojson }}, backgroundColor: ['#4361ee', '#e6e9f2'], borderWidth: 0 }]
+    },
+    options: { plugins: { legend: { position: 'bottom' } }, cutout: '68%' }
+  });
+
+  new Chart(document.getElementById('chartDept'), {
+    type: 'bar',
+    data: {
+      labels: {{ by_department.labels | tojson }},
+      datasets: [{ data: {{ by_department.data | tojson }}, backgroundColor: '#4361ee', borderRadius: 6 }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: gridColor }, beginAtZero: true, ticks: { precision: 0 } } } }
+  });
+
+  new Chart(document.getElementById('chartOs'), {
+    type: 'pie',
+    data: {
+      labels: {{ by_os.labels | tojson }},
+      datasets: [{ data: {{ by_os.data | tojson }}, backgroundColor: ['#4361ee', '#16a34a', '#d97706', '#0891b2'], borderWidth: 0 }]
+    },
+    options: { plugins: { legend: { position: 'bottom' } } }
+  });
+
+  new Chart(document.getElementById('chartMfr'), {
+    type: 'bar',
+    data: {
+      labels: {{ by_manufacturer.labels | tojson }},
+      datasets: [{ data: {{ by_manufacturer.data | tojson }}, backgroundColor: '#0891b2', borderRadius: 6 }]
+    },
+    options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { grid: { color: gridColor }, beginAtZero: true, ticks: { precision: 0 } }, y: { grid: { display: false } } } }
+  });
+</script>
+{% endblock %}

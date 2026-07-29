@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Employees{% endblock %}
+{% block content %}
+
+<div class="af-page-header">
+  <div>
+    <h1 class="af-page-title">Employees</h1>
+    <p class="af-page-subtitle">{{ employees|length }} total employees</p>
+  </div>
+  {% if current_user.is_admin %}
+  <a href="{{ url_for('employees.create') }}" class="btn btn-af-primary"><i class="bi bi-plus-lg me-1"></i> New Employee</a>
+  {% endif %}
+</div>
+
+<div class="af-card mb-3">
+  <div class="af-card-body">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="af-form-label">Search</label>
+        <input type="text" name="q" value="{{ q }}" class="af-form-control" placeholder="Name, ID, department…">
+      </div>
+      <div class="col-md-3">
+        <label class="af-form-label">Department</label>
+        <select name="department" class="af-form-control">
+          <option value="">All Departments</option>
+          {% for d in departments %}
+          <option value="{{ d }}" {{ 'selected' if department==d }}>{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="af-form-label">Assignment</label>
+        <select name="assignment" class="af-form-control">
+          <option value="">All</option>
+          <option value="assigned" {{ 'selected' if assignment=='assigned' }}>Assigned</option>
+          <option value="unassigned" {{ 'selected' if assignment=='unassigned' }}>Unassigned</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-af-outline w-100" type="submit"><i class="bi bi-funnel me-1"></i>Filter</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="af-card">
+  <div class="af-table-wrap">
+    {% if employees %}
+    <table class="af-table">
+      <thead>
+        <tr><th>Employee</th><th>ID</th><th>Department</th><th>Assigned Computer</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for e in employees %}
+        <tr style="cursor:pointer" onclick="window.location='{{ url_for('employees.detail', employee_id=e.employee_id) }}'">
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div class="af-avatar" style="width:32px;height:32px;font-size:12px;">{{ e.name[:1]|upper }}</div>
+              <div>
+                <div class="fw-semibold">{{ e.name }}</div>
+                <div class="text-muted small">{{ e.email or '—' }}</div>
+              </div>
+            </div>
+          </td>
+          <td class="af-mono">{{ e.employee_id }}</td>
+          <td>{{ e.department }}</td>
+          <td>{{ e.asset.asset_id if e.asset else '—' }}</td>
+          <td>
+            {% if e.status == 'Assigned' %}
+            <span class="af-badge af-badge-success"><i class="bi bi-check-circle-fill"></i> Assigned</span>
+            {% else %}
+            <span class="af-badge af-badge-muted"><i class="bi bi-dash-circle"></i> Unassigned</span>
+            {% endif %}
+          </td>
+          <td class="text-end"><i class="bi bi-chevron-right text-muted"></i></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="af-empty">
+      <i class="bi bi-people"></i>
+      <h5 class="fw-bold">No employees found</h5>
+      <p>Try adjusting your filters or add a new employee.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if mode=='edit' else 'New' }} Employee{% endblock %}
+{% block content %}
+
+<div class="af-page-header">
+  <div>
+    <a href="{{ url_for('employees.list_employees') }}" class="text-muted small"><i class="bi bi-arrow-left"></i> Back to Employees</a>
+    <h1 class="af-page-title mt-1">{{ 'Edit Employee' if mode=='edit' else 'New Employee' }}</h1>
+  </div>
+</div>
+
+<div class="af-card" style="max-width: 640px;">
+  <div class="af-card-body">
+    <form method="POST" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="af-form-label">Employee ID</label>
+          {{ form.employee_id(class="af-form-control", placeholder="EMP-101") }}
+          {% for e in form.employee_id.errors %}<div class="af-form-error">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          <label class="af-form-label">Full Name</label>
+          {{ form.name(class="af-form-control", placeholder="Rahul Sharma") }}
+          {% for e in form.name.errors %}<div class="af-form-error">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          <label class="af-form-label">Department</label>
+          {{ form.department(class="af-form-control", placeholder="Engineering") }}
+          {% for e in form.department.errors %}<div class="af-form-error">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          <label class="af-form-label">Email</label>
+          {{ form.email(class="af-form-control", placeholder="rahul@company.com") }}
+          {% for e in form.email.errors %}<div class="af-form-error">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          <label class="af-form-label">Phone Number</label>
+          {{ form.phone(class="af-form-control", placeholder="+91 98765 43210") }}
+          {% for e in form.phone.errors %}<div class="af-form-error">{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+      <div class="af-divider"></div>
+      <div class="d-flex gap-2">
+        {{ form.submit(class="btn btn-af-primary") }}
+        <a href="{{ url_for('employees.list_employees') }}" class="btn btn-af-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

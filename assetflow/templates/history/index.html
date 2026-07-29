@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}History{% endblock %}
+{% block content %}
+
+<div class="af-page-header">
+  <div>
+    <h1 class="af-page-title">Audit History</h1>
+    <p class="af-page-subtitle">Every create, update, delete, assign, reassign, and QR action — logged.</p>
+  </div>
+  <a href="{{ url_for('history.export_csv') }}" class="btn btn-af-outline"><i class="bi bi-download me-1"></i> Export CSV</a>
+</div>
+
+<div class="af-card mb-3">
+  <div class="af-card-body">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="af-form-label">Action</label>
+        <select name="action" class="af-form-control">
+          <option value="">All Actions</option>
+          {% for a in actions %}<option value="{{ a }}" {{ 'selected' if action==a }}>{{ a }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="af-form-label">Asset ID</label>
+        <input type="text" name="asset_id" value="{{ asset_id }}" class="af-form-control" placeholder="PC-001">
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-af-outline w-100" type="submit">Filter</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="af-card">
+  <div class="af-table-wrap">
+    {% if logs %}
+    <table class="af-table">
+      <thead><tr><th>Timestamp</th><th>Action</th><th>Asset</th><th>Field</th><th>Old → New</th><th>By</th></tr></thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td class="text-muted small">{{ log.timestamp.strftime('%b %d, %Y %H:%M') }}</td>
+          <td><span class="af-badge af-badge-primary">{{ log.action }}</span></td>
+          <td>
+            {% if log.asset %}
+            <a href="{{ url_for('assets.detail', asset_id=log.asset.asset_id) }}">{{ log.asset.asset_id }}</a>
+            {% else %}—{% endif %}
+          </td>
+          <td class="text-muted small">{{ log.field_changed or '—' }}</td>
+          <td class="text-muted small">{{ log.old_value or '—' }} → {{ log.new_value or '—' }}</td>
+          <td class="text-muted small">{{ log.user.username if log.user else 'system' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="af-empty"><i class="bi bi-clock-history"></i><h5 class="fw-bold">No audit entries</h5></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

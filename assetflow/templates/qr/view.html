@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}QR · {{ asset.asset_id }}{% endblock %}
+{% block content %}
+
+<div class="af-page-header">
+  <div>
+    <a href="{{ url_for('qr.index') }}" class="text-muted small"><i class="bi bi-arrow-left"></i> Back to QR Codes</a>
+    <h1 class="af-page-title mt-1">{{ asset.asset_id }} — QR Code</h1>
+  </div>
+  <a href="{{ url_for('qr.label', asset_id=asset.asset_id) }}" class="btn btn-af-primary"><i class="bi bi-printer me-1"></i> Print Label</a>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="af-card text-center">
+      <div class="af-card-body">
+        <div class="af-qr-box mb-3">
+          <img src="{{ qr_image }}" alt="QR" width="220" height="220">
+        </div>
+        <div class="af-mono small text-muted mb-1">{{ url }}</div>
+        <div class="text-muted small">This QR is permanent — it always shows the latest data.</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="af-card">
+      <div class="af-card-header"><h3>Live Preview</h3></div>
+      <div class="af-card-body">
+        <dl class="row mb-0 small">
+          <dt class="col-4 text-muted">Model</dt><dd class="col-8">{{ asset.model_number }} · {{ asset.manufacturer }}</dd>
+          <dt class="col-4 text-muted">Hostname</dt><dd class="col-8 af-mono">{{ asset.hostname or '—' }}</dd>
+          <dt class="col-4 text-muted">RAM / Disk</dt><dd class="col-8">{{ asset.ram or '—' }} / {{ asset.disk_size or '—' }}</dd>
+          <dt class="col-4 text-muted">OS</dt><dd class="col-8">{{ asset.operating_system }} {{ asset.os_version or '' }}</dd>
+          <dt class="col-4 text-muted">Assigned To</dt><dd class="col-8">{{ asset.employee.name if asset.employee else '—' }}</dd>
+          <dt class="col-4 text-muted">Status</dt><dd class="col-8">{{ asset.status }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

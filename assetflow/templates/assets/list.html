@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Assets{% endblock %}
+{% block content %}
+
+<div class="af-page-header">
+  <div>
+    <h1 class="af-page-title">Assets</h1>
+    <p class="af-page-subtitle">{{ assets|length }} computers in inventory</p>
+  </div>
+  {% if current_user.is_admin %}
+  <a href="{{ url_for('assets.create') }}" class="btn btn-af-primary"><i class="bi bi-plus-lg me-1"></i> New Computer</a>
+  {% endif %}
+</div>
+
+<div class="af-card mb-3">
+  <div class="af-card-body">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="af-form-label">Search</label>
+        <input type="text" name="q" value="{{ q }}" class="af-form-control" placeholder="Tag, host, serial, IP…">
+      </div>
+      <div class="col-md-2">
+        <label class="af-form-label">Manufacturer</label>
+        <select name="manufacturer" class="af-form-control">
+          <option value="">All</option>
+          {% for m in manufacturers %}<option value="{{ m }}" {{ 'selected' if manufacturer==m }}>{{ m }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="af-form-label">OS</label>
+        <select name="os" class="af-form-control">
+          <option value="">All</option>
+          <option value="Windows" {{ 'selected' if os_filter=='Windows' }}>Windows</option>
+          <option value="Linux" {{ 'selected' if os_filter=='Linux' }}>Linux</option>
+          <option value="macOS" {{ 'selected' if os_filter=='macOS' }}>macOS</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="af-form-label">Department</label>
+        <select name="department" class="af-form-control">
+          <option value="">All</option>
+          {% for d in departments %}<option value="{{ d }}" {{ 'selected' if department==d }}>{{ d }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="af-form-label">Status</label>
+        <select name="status" class="af-form-control">
+          <option value="">All</option>
+          <option value="assigned" {{ 'selected' if status=='assigned' }}>Assigned</option>
+          <option value="available" {{ 'selected' if status=='available' }}>Available</option>
+        </select>
+      </div>
+      <div class="col-md-1">
+        <button class="btn btn-af-outline w-100" type="submit"><i class="bi bi-funnel"></i></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="af-card">
+  <div class="af-table-wrap">
+    {% if assets %}
+    <table class="af-table">
+      <thead>
+        <tr><th>Asset</th><th>Tag</th><th>Hostname</th><th>OS</th><th>Assigned To</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for a in assets %}
+        <tr style="cursor:pointer" onclick="window.location='{{ url_for('assets.detail', asset_id=a.asset_id) }}'">
+          <td>
+            <div class="fw-semibold">{{ a.asset_id }}</div>
+            <div class="text-muted small">{{ a.model_number }} · {{ a.manufacturer }}</div>
+          </td>
+          <td class="af-mono">{{ a.asset_tag }}</td>
+          <td class="af-mono">{{ a.hostname or '—' }}</td>
+          <td>
+            <i class="bi {{ 'bi-windows' if a.operating_system=='Windows' else ('bi-apple' if a.operating_system=='macOS' else 'bi-terminal') }} me-1"></i>
+            {{ a.operating_system }}
+          </td>
+          <td>{{ a.employee.name if a.employee else '—' }}</td>
+          <td>
+            {% if a.status == 'Assigned' %}
+            <span class="af-badge af-badge-success"><i class="bi bi-check-circle-fill"></i> Assigned</span>
+            {% else %}
+            <span class="af-badge af-badge-muted"><i class="bi bi-dash-circle"></i> Available</span>
+            {% endif %}
+          </td>
+          <td class="text-end"><i class="bi bi-chevron-right text-muted"></i></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="af-empty">
+      <i class="bi bi-pc-display-horizontal"></i>
+      <h5 class="fw-bold">No assets found</h5>
+      <p>Try adjusting your filters or add a new computer.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

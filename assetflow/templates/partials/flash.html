@@ -1,0 +1,14 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+  {% for category, message in messages %}
+  <div class="toast af-toast align-items-center border-0 text-bg-{{ 'danger' if category=='danger' else ('success' if category=='success' else ('warning' if category=='warning' else 'primary')) }}" role="alert">
+    <div class="d-flex">
+      <div class="toast-body">{{ message }}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endwith %}

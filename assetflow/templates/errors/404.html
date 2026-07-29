@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Not Found{% endblock %}
+{% block content %}
+<div class="af-empty">
+  <i class="bi bi-search"></i>
+  <h3 class="fw-bold">Page Not Found</h3>
+  <p>The page or resource you're looking for doesn't exist.</p>
+  <a href="{{ url_for('dashboard.index') }}" class="btn btn-af-primary">Back to Dashboard</a>
+</div>
+{% endblock %}
+{% block guest_content %}
+<div class="af-empty">
+  <i class="bi bi-search"></i>
+  <h3 class="fw-bold">Page Not Found</h3>
+  <a href="{{ url_for('auth.login') }}" class="btn btn-af-primary">Sign In</a>
+</div>
+{% endblock %}
