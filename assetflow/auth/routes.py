@@ -7,7 +7,6 @@ from ..extensions import db
 from ..models import User
 from ..forms import LoginForm
 from ..utils import log_action
-
 @bp.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
@@ -15,31 +14,30 @@ def login():
 
     form = LoginForm()
 
+    print("=" * 60)
+    print("REQUEST METHOD:", request.method)
+    print("FORM VALID:", form.validate_on_submit())
+    print("FORM ERRORS:", form.errors)
+    print("=" * 60)
+
     if form.validate_on_submit():
 
-        print("\n" + "=" * 60)
-        print("LOGIN ATTEMPT")
         print("=" * 60)
-        print("Username Entered :", form.username.data)
+        print("LOGIN ATTEMPT")
+        print("Username:", form.username.data)
 
         user = User.query.filter_by(
             username=form.username.data.strip()
         ).first()
 
-        print("User Found       :", user)
+        print("User:", user)
 
         if user:
-            print("User ID          :", user.id)
-            print("Username         :", user.username)
-            print("Email            :", user.email)
-            print("Role             :", user.role)
-            print("Password Hash    :", user.password_hash)
-            print(
-                "Password Match   :",
-                user.check_password(form.password.data)
-            )
+            print("Password Entered:", form.password.data)
+            print("Password Match:", user.check_password(form.password.data))
+            print("Stored Hash:", user.password_hash)
         else:
-            print("❌ No user found with this username.")
+            print("User not found")
 
         print("=" * 60)
 
@@ -51,22 +49,12 @@ def login():
 
             log_action("User Login")
 
-            print("✅ Login Successful")
-            print("=" * 60)
+            print("LOGIN SUCCESSFUL")
 
             next_page = request.args.get("next")
             return redirect(next_page or url_for("dashboard.index"))
 
-        print("❌ Login Failed")
-        print("=" * 60)
-
+        print("LOGIN FAILED")
         flash("Invalid username or password.", "danger")
-
-    else:
-        if request.method == "POST":
-            print("\n" + "=" * 60)
-            print("FORM VALIDATION FAILED")
-            print(form.errors)
-            print("=" * 60)
 
     return render_template("auth/login.html", form=form)

@@ -11,24 +11,44 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False, index=True)
     email = db.Column(db.String(150), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(20), nullable=False, default="viewer")  # admin | viewer
+    role = db.Column(db.String(20), nullable=False, default="viewer")
     dark_mode = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime, nullable=True)
 
     def set_password(self, raw_password: str) -> None:
-        self.password_hash = bcrypt.generate_password_hash(raw_password).decode("utf-8")
+        print("=" * 60)
+        print("SETTING PASSWORD")
+        print("Raw Password :", raw_password)
+
+        self.password_hash = bcrypt.generate_password_hash(
+            raw_password
+        ).decode("utf-8")
+
+        print("Generated Hash:", self.password_hash)
+        print("=" * 60)
 
     def check_password(self, raw_password: str) -> bool:
-        return bcrypt.check_password_hash(self.password_hash, raw_password)
+        result = bcrypt.check_password_hash(
+            self.password_hash,
+            raw_password,
+        )
+
+        print("=" * 60)
+        print("CHECKING PASSWORD")
+        print("Entered Password :", raw_password)
+        print("Stored Hash      :", self.password_hash)
+        print("Password Match   :", result)
+        print("=" * 60)
+
+        return result
 
     @property
-    def is_admin(self) -> bool:
+    def is_admin(self):
         return self.role == "admin"
 
     def __repr__(self):
         return f"<User {self.username}>"
-
 
 class Employee(db.Model):
     __tablename__ = "employees"
