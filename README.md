@@ -1,99 +1,310 @@
-# AssetFlow — IT Asset Management System
+# 🚀 AssetFlow — IT Asset Management System
 
-A production-ready Flask application for managing employees, computers/assets,
-assignments, QR labels, audit history, dashboards, and reports.
+A production-ready **Flask-based IT Asset Management System** for managing employees, computers/assets, assignments, QR labels, audit history, dashboards, reports, and organization settings.
 
-## Stack
-Flask, SQLAlchemy, Flask-Migrate, Flask-Login, Flask-Bcrypt, Flask-WTF, Flask-Caching,
-Bootstrap 5, Chart.js, qrcode/Pillow. SQLite by default; switch to PostgreSQL by changing
-`DATABASE_URL` only.
+## 🌐 Live Demo
 
-## Setup
+**Application URL**
+
+👉 https://assetflow-5.onrender.com/auth/login
+
+### Demo Credentials
+
+| Role | Username | Password |
+|------|----------|-----------|
+| Admin | `admin` | `admin123` |
+| Viewer | `viewer` | `viewer123` |
+
+---
+
+# ✨ Features
+
+- 🔐 Role-Based Authentication (Admin & Viewer)
+- 👨‍💼 Employee Management
+- 💻 Computer / Asset Management
+- 🔄 One-to-One Employee ↔ Asset Assignment
+- 🏷 Asset Tags & Model Numbers
+- 🌐 MAC Address & IP Address Tracking
+- 📱 QR Code Generation & Public Asset Page
+- 📜 Complete Audit History
+- 📊 Dashboard with Statistics & Charts
+- 🌙 Dark Mode
+- 📄 Reports & Export
+- ⚙ Organization Settings
+- 🔒 CSRF Protection
+- 🗄 SQLite & PostgreSQL Support
+
+---
+
+# 🛠 Tech Stack
+
+### Backend
+- Flask
+- SQLAlchemy
+- Flask-Migrate
+- Flask-Login
+- Flask-Bcrypt
+- Flask-WTF
+- Flask-Caching
+
+### Frontend
+- Bootstrap 5
+- Chart.js
+- Bootstrap Icons
+
+### Database
+- SQLite
+- PostgreSQL (Neon, Render, Railway, etc.)
+
+### Other Libraries
+- qrcode
+- Pillow
+
+---
+
+# 🚀 Live Deployment
+
+The application is deployed on **Render**.
+
+### Login Page
+
+https://assetflow-5.onrender.com/auth/login
+
+---
+
+# ⚙ Local Installation
 
 ```bash
+git clone <your-repository-url>
+
+cd AssetFlow
+
 python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+
+# Windows
+venv\Scripts\activate
+
+# Linux / Mac
+source venv/bin/activate
 
 pip install -r requirements.txt
 
-cp .env.example .env            # edit SECRET_KEY / PUBLIC_BASE_URL as needed
+cp .env.example .env
 
-python seed.py                  # creates tables + demo data
+python seed.py
 
-flask run                       # or: python app.py
+python app.py
 ```
 
-App runs at http://localhost:5000
+Application runs on
 
-### Demo logins
-| Role   | Username | Password    |
-|--------|----------|-------------|
-| Admin  | admin    | Admin@123   |
-| Viewer | viewer   | Viewer@123  |
+```
+http://localhost:5000
+```
 
-## Project layout
+---
+
+# 📁 Project Structure
 
 ```
 assetflow/
-├── app.py                  # application factory
-├── config.py                # DATABASE_URL / SECRET_KEY / etc.
-├── seed.py                  # demo data
+│
+├── app.py
+├── config.py
+├── seed.py
 ├── requirements.txt
+│
 ├── assetflow/
-│   ├── auth/                # login/logout, dark mode toggle
-│   ├── dashboard/           # stats + charts + global search
-│   ├── employees/           # employee CRUD
-│   ├── assets/               # asset CRUD + assignment engine
-│   ├── history/              # audit timeline + CSV export
-│   ├── qr/                   # admin QR views + public /pc/<id> route
-│   ├── settings/             # org settings + reports/export
+│   ├── auth/
+│   ├── dashboard/
+│   ├── employees/
+│   ├── assets/
+│   ├── history/
+│   ├── qr/
+│   ├── settings/
 │   ├── models.py
 │   ├── forms.py
-│   ├── utils.py              # validators, audit logger, QR generator
-│   ├── static/{css,js,images}
-│   └── templates/
+│   ├── utils.py
+│   ├── templates/
+│   └── static/
+│
+└── instance/
 ```
 
-## Key design points
+---
 
-- **Strict 1:1 Employee ↔ Asset** enforced with a `UNIQUE` foreign key
-  (`assets.employee_id`) at the database level, not just in application code.
-- **Assignment engine** (`assets/routes.py`) blocks assigning a second computer
-  to an employee who already has one, with the exact message:
-  *"Employee already has an assigned computer. Please unassign the existing
-  computer first."* Reassigning automatically clears the previous ownership.
-- **Status is derived, never stored/edited** — `Asset.status` and
-  `Employee.status` are computed properties based on the FK.
-- **QR codes encode only the permanent URL** (`/pc/<asset_id>`), never
-  specifications. The public page reads live from the database, so edits
-  show up immediately without regenerating the QR.
-- **Audit log** row is written on every create/update/delete/assign/
-  reassign/unassign/QR-view/QR-print action, with old/new values.
-- **Dark mode** is stored both in `localStorage` (instant on load) and on
-  `User.dark_mode` (persists across logout/login and devices).
-- **MAC/IPv4/IPv6 validation** happens server-side in `utils.py`
-  (`validate_mac`, `validate_ip`), independent of any client-side checks.
+# 💻 Core Functionalities
 
-## Switching to PostgreSQL
+## Employee Management
 
-Set `DATABASE_URL` in `.env`:
+- Add Employees
+- Update Employees
+- Delete Employees
+- Department Management
+
+---
+
+## Asset Management
+
+- Asset ID
+- Asset Tag
+- Model Number
+- Manufacturer
+- Hostname
+- Serial Number
+- MAC Address
+- IP Address
+- CPU
+- RAM
+- Disk Size
+- Disk Type
+- Operating System
+
+---
+
+## Asset Assignment
+
+Strict **1 Employee ↔ 1 Computer**
+
+- Assign Computer
+- Reassign Computer
+- Unassign Computer
+
+The application prevents assigning multiple computers to the same employee.
+
+---
+
+## QR Code System
+
+Each computer receives a QR Code.
+
+Scanning the QR opens a public page:
+
 ```
-DATABASE_URL=postgresql://user:password@host:5432/assetflow
+/pc/<asset_id>
 ```
-No code changes required.
 
-## Running the acceptance test
+The QR stores only the asset URL.
 
-1. Log in as `admin`.
-2. Create employees `EMP-101` (Rahul) and `EMP-102` (Aman) — or use seeded data.
-3. Create computer `PC-001`, tag `AST-0001`, model `Dell OptiPlex 7010`,
-   MAC `00:1A:2B:3C:4D:5E`.
-4. Assign `PC-001` to Rahul from the asset detail page.
-5. Try assigning another computer to Rahul — verify the block message appears.
-6. Open **QR Codes** → View → Print Label for `PC-001`.
-7. Scan the QR with any phone camera — it opens `/pc/PC-001` in the browser.
-8. Edit `PC-001`: update RAM and IP address.
-9. Reassign `PC-001` to Aman.
-10. Scan the same QR again — updated hardware + Aman now show, no QR regeneration needed.
-11. Check **History** — every step above is logged with old/new values.
-12. Toggle dark mode, log out, log back in — the preference persists.
+Asset information is fetched live from the database, so no QR regeneration is required after updates.
+
+---
+
+## Audit History
+
+Every action is automatically logged.
+
+Examples:
+
+- Create Asset
+- Update Asset
+- Delete Asset
+- Assign
+- Reassign
+- Unassign
+- QR View
+- QR Print
+
+---
+
+## Dashboard
+
+- Total Assets
+- Assigned Assets
+- Available Assets
+- Total Employees
+- Charts
+- Search
+
+---
+
+## Reports
+
+Generate reports for:
+
+- Assets
+- Employees
+- Assignment History
+
+---
+
+## Dark Mode
+
+Dark Mode preference is saved:
+
+- Browser Local Storage
+- User Account
+
+---
+
+# 🔒 Validation
+
+Server-side validation includes:
+
+- MAC Address
+- IPv4
+- IPv6
+- Required Fields
+- Duplicate Asset IDs
+- Duplicate Employee IDs
+
+---
+
+# PostgreSQL Support
+
+Simply update your `.env`:
+
+```env
+DATABASE_URL=postgresql://username:password@hostname:5432/database
+```
+
+No code changes are required.
+
+---
+
+# 🧪 Acceptance Test
+
+1. Login as **Admin**
+2. Create Employees
+3. Create Computer
+4. Assign Computer
+5. Verify one-to-one assignment restriction
+6. Generate QR Code
+7. Scan QR Code
+8. Update Asset Information
+9. Reassign Asset
+10. Verify Audit History
+11. Toggle Dark Mode
+12. Logout & Login again
+
+---
+
+# 📸 Screenshots
+
+Add screenshots here.
+
+Examples:
+
+- Login
+- Dashboard
+- Employees
+- Assets
+- QR Codes
+- Reports
+- Dark Mode
+
+---
+
+# 👨‍💻 Author
+
+**Daksh Sharma**
+
+B.Tech CSE (AI & ML)
+
+---
+
+# 🌐 Live Application
+
+**AssetFlow**
+
+https://assetflow-5.onrender.com/auth/login
